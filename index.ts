@@ -9,6 +9,9 @@ import router from "./src/router/router";
 const PORT = 3000;
 
 const app = express();
+app.set("view engine", "ejs");
+
+app.set('views', './src/views');
 
 app.use(bodyParser.json());
 

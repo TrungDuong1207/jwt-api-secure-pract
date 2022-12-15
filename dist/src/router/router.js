@@ -10,7 +10,22 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_model_1 = require("../schemas/user.model");
 const product_model_1 = require("../schemas/product.model");
 const auth_1 = require("../middleware/auth");
-router.use("/product", auth_1.auth);
+const multer_1 = __importDefault(require("multer"));
+const upload = (0, multer_1.default)();
+router.use("/product", upload.none(), auth_1.auth);
+router.get("/user/login", async (req, res) => {
+    res.render("login");
+});
+router.get("/home", async (req, res) => {
+    res.render("home");
+});
+router.get("/list", async (req, res) => {
+    const products = await product_model_1.ProductModel.find();
+    res.render("list", { products: products });
+});
+router.get("/create", async (req, res) => {
+    res.render("create");
+});
 router.post("/user/register", async (req, res) => {
     try {
         const user = await user_model_1.UserModel.findOne({ username: req.body.username });
@@ -18,6 +33,7 @@ router.post("/user/register", async (req, res) => {
             const passwordHash = await bcrypt_1.default.hash(req.body.password, 10);
             let userData = {
                 username: req.body.username,
+                role: req.body.role,
                 password: passwordHash
             };
             const newUser = await user_model_1.UserModel.create(userData);
@@ -31,7 +47,7 @@ router.post("/user/register", async (req, res) => {
         res.json({ err: err });
     }
 });
-router.post("/user/login", async (req, res) => {
+router.post("/user/login", upload.none(), async (req, res) => {
     try {
         const user = await user_model_1.UserModel.findOne({ username: req.body.username });
         if (user) {
@@ -45,14 +61,15 @@ router.post("/user/login", async (req, res) => {
             let payload = {
                 user_id: user["id"],
                 username: user["username"],
+                role: user["role"]
             };
             const token = jsonwebtoken_1.default.sign(payload, '123456789', {
                 expiresIn: 36000,
             });
-            return res.json({ token: token, code: 200 });
+            res.render("home", { token: token });
         }
         else {
-            return res.json({ err: 'Email has been used' });
+            return res.json({ err: 'Sai tài khoản hặc mật khẩu' });
         }
     }
     catch (err) {
@@ -61,18 +78,25 @@ router.post("/user/login", async (req, res) => {
 });
 router.post("/product/create", async (req, res) => {
     try {
-        const product = await product_model_1.ProductModel.findOne({ name: req.body.name });
-        if (!product) {
-            let productData = {
-                name: req.body.name,
-                price: req.body.price,
-                category: req.body.category,
-            };
-            const productNew = await product_model_1.ProductModel.create(productData);
-            res.json({ product: productNew, code: 200 });
+        const user = req.decoded;
+        if (user.role !== "admin") {
+            res.render("error");
+            return;
         }
-        else {
-            res.json({ err: "Product exited" });
+        {
+            const product = await product_model_1.ProductModel.findOne({ name: req.body.name });
+            if (!product) {
+                let productData = {
+                    name: req.body.name,
+                    price: req.body.price,
+                    category: req.body.category,
+                };
+                const productNew = await product_model_1.ProductModel.create(productData);
+                res.render("success");
+            }
+            else {
+                res.json({ err: "Product exited" });
+            }
         }
     }
     catch (err) {

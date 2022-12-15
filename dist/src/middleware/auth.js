@@ -17,6 +17,7 @@ const auth = async (req, res, next) => {
                     });
                 }
                 else {
+                    console.log(decoded);
                     req.decoded = decoded;
                     next();
                 }

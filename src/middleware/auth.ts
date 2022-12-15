@@ -11,6 +11,9 @@ export const auth = async (req, res, next) => {
                         status: 401,
                     });
                 } else {
+
+                    console.log(decoded);
+                    
                     req.decoded = decoded;
                     next();
                 }

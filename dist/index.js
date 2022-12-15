@@ -9,6 +9,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const router_1 = __importDefault(require("./src/router/router"));
 const PORT = 3000;
 const app = (0, express_1.default)();
+app.set("view engine", "ejs");
+app.set('views', './src/views');
 app.use(body_parser_1.default.json());
 const DB_URL = 'mongodb://127.0.0.1:27017/admin';
 mongoose_1.default.connect(DB_URL)
